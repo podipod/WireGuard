@@ -2,11 +2,11 @@
 
 #判断系统
 if [ ! -e '/etc/redhat-release' ]; then
-echo "仅支持centos 7"
+echo "仅支持centos7"
 exit
 fi
 if  [ -n "$(grep ' 6\.' /etc/redhat-release)" ] ;then
-echo "仅支持centos 7"
+echo "仅支持centos7"
 exit
 fi
 
@@ -28,11 +28,11 @@ update_kernel(){
     rpm -ivh kernel-ml-devel-4.19.1-1.el7.elrepo.x86_64.rpm
     yum -y --enablerepo=elrepo-kernel install kernel-ml-devel
     read -p "需要重启VPS，再次执行脚本选择安装wireguard，是否现在重启 ? [Y/n] :" yn
-	[ -z "${yn}" ] && yn="y"
-	if [[ $yn == [Yy] ]]; then
-		echo -e "VPS 重启中..."
-		reboot
-	fi
+    [ -z "${yn}" ] && yn="y"
+    if [[ $yn == [Yy] ]]; then
+        echo -e "VPS 重启中..."
+        reboot
+    fi
 }
 
 #生成随机端口
@@ -59,8 +59,8 @@ config_client(){
 cat > /etc/wireguard/client.conf <<-EOF
 [Interface]
 PrivateKey = $c1
-Address = 10.10.0.2/32
-DNS = 8.8.8.8,1.0.0.1
+Address = 10.10.12.2/32
+DNS = 8.8.8.8
 MTU = 1420
 [Peer]
 PublicKey = $s2
@@ -106,15 +106,15 @@ wireguard_install(){
 cat > /etc/wireguard/wg0.conf <<-EOF
 [Interface]
 PrivateKey = $s1
-Address = 10.10.0.1/16 
-PostUp   = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -I FORWARD -s 10.10.0.1/24 -d 10.10.0.1/24 -j DROP; iptables -t nat -A POSTROUTING -o $eth -j MASQUERADE
-PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -D FORWARD -s 10.10.0.1/24 -d 10.10.0.1/24 -j DROP; iptables -t nat -D POSTROUTING -o $eth -j MASQUERADE
+Address = 10.10.12.1/16 
+PostUp   = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -I FORWARD -s 10.10.12.1/24 -d 10.10.12.1/24 -j DROP; iptables -t nat -A POSTROUTING -o $eth -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -D FORWARD -s 10.10.12.1/24 -d 10.10.12.1/24 -j DROP; iptables -t nat -D POSTROUTING -o $eth -j MASQUERADE
 ListenPort = $port
-DNS = 8.8.8.8,1.0.0.1
+DNS = 8.8.8.8
 MTU = 1420
 [Peer]
 PublicKey = $c2
-AllowedIPs = 10.10.0.2/32
+AllowedIPs = 10.10.12.2/32
 EOF
 
     config_client
@@ -133,14 +133,14 @@ add_user(){
     ipnum=$(grep Allowed /etc/wireguard/wg0.conf | tail -1 | awk -F '[ ./]' '{print $6}')
     newnum=$((10#${ipnum}+1))
     sed -i 's%^PrivateKey.*$%'"PrivateKey = $(cat temprikey)"'%' $newname.conf
-    sed -i 's%^Address.*$%'"Address = 10.10.0.$newnum\/32"'%' $newname.conf
+    sed -i 's%^Address.*$%'"Address = 10.10.12.$newnum\/32"'%' $newname.conf
 
 cat >> /etc/wireguard/wg0.conf <<-EOF
 [Peer]
 PublicKey = $(cat tempubkey)
-AllowedIPs = 10.10.0.$newnum/32
+AllowedIPs = 10.10.12.$newnum/32
 EOF
-    wg set wg0 peer $(cat tempubkey) allowed-ips 10.10.0.$newnum/32
+    wg set wg0 peer $(cat tempubkey) allowed-ips 10.10.12.$newnum/32
     echo -e "\033[37;41m添加完成，文件：/etc/wireguard/$newname.conf\033[0m"
     rm -f temprikey tempubkey
 }
@@ -148,8 +148,8 @@ EOF
 start_menu(){
     clear
     echo "========================="
-    echo " 介绍：适用于CentOS 7"
-    echo " 作者：www.podipod.com"
+    echo " 介绍：适用于CentOS7"
+    echo " 作者：A"
     echo "========================="
     echo "1. 升级系统内核"
     echo "2. 安装wireguard"
@@ -161,34 +161,34 @@ start_menu(){
     echo
     read -p "请输入数字:" num
     case "$num" in
-    	1)
-	update_kernel
-	;;
-	2)
-	wireguard_install
-	;;
-	3)
-	wireguard_update
-	;;
-	4)
-	wireguard_remove
-	;;
-	5)
-	content=$(cat /etc/wireguard/client.conf)
-    	echo "${content}" | qrencode -o - -t UTF8
-	;;
-	6)
-	add_user
-	;;
-	0)
-	exit 1
-	;;
-	*)
-	clear
-	echo "请输入正确数字"
-	sleep 5s
-	start_menu
-	;;
+        1)
+    update_kernel
+    ;;
+    2)
+    wireguard_install
+    ;;
+    3)
+    wireguard_update
+    ;;
+    4)
+    wireguard_remove
+    ;;
+    5)
+    content=$(cat /etc/wireguard/client.conf)
+        echo "${content}" | qrencode -o - -t UTF8
+    ;;
+    6)
+    add_user
+    ;;
+    0)
+    exit 1
+    ;;
+    *)
+    clear
+    echo "请输入正确数字"
+    sleep 5s
+    start_menu
+    ;;
     esac
 }
 
