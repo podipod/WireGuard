@@ -2,11 +2,11 @@
 
 #判断系统
 if [ ! -e '/etc/redhat-release' ]; then
-echo "仅支持centos7"
+echo "仅支持centos 7.x"
 exit
 fi
 if  [ -n "$(grep ' 6\.' /etc/redhat-release)" ] ;then
-echo "仅支持centos7"
+echo "仅支持centos 7.x"
 exit
 fi
 
@@ -59,8 +59,8 @@ config_client(){
 cat > /etc/wireguard/client.conf <<-EOF
 [Interface]
 PrivateKey = $c1
-Address = 10.77.77.2/32
-DNS = 8.8.8.8
+Address = 10.10.0.2/24
+DNS = 1.1.1.1,8.8.8.8
 MTU = 1420
 
 [Peer]
@@ -108,15 +108,15 @@ cat > /etc/wireguard/wg0.conf <<-EOF
 [Interface]
 PrivateKey = $s1
 Address = 10.77.0.1/16 
-PostUp   = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -I FORWARD -s 10.77.77.1/24 -d 10.77.77.1/24 -j DROP; iptables -t nat -A POSTROUTING -o $eth -j MASQUERADE
-PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -D FORWARD -s 10.77.77.1/24 -d 10.77.77.1/24 -j DROP; iptables -t nat -D POSTROUTING -o $eth -j MASQUERADE
+PostUp   = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -I FORWARD -s 10.10.0.1/24 -d 10.10.0.1/24 -j DROP; iptables -t nat -A POSTROUTING -o $eth -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -D FORWARD -s 10.10.0.1/24 -d 10.10.0.1/24 -j DROP; iptables -t nat -D POSTROUTING -o $eth -j MASQUERADE
 ListenPort = $port
 DNS = 8.8.8.8
 MTU = 1420
 
 [Peer]
 PublicKey = $c2
-AllowedIPs = 10.77.77.2/32
+AllowedIPs = 10.10.0.2/24
 EOF
 
     config_client
@@ -135,7 +135,7 @@ add_user(){
     ipnum=$(grep Allowed /etc/wireguard/wg0.conf | tail -1 | awk -F '[ ./]' '{print $6}')
     newnum=$((10#${ipnum}+1))
     sed -i 's%^PrivateKey.*$%'"PrivateKey = $(cat temprikey)"'%' $newname.conf
-    sed -i 's%^Address.*$%'"Address = 10.77.77.$newnum\/32"'%' $newname.conf
+    sed -i 's%^Address.*$%'"Address = 10.10.0.$newnum\/32"'%' $newname.conf
 
 cat >> /etc/wireguard/wg0.conf <<-EOF
 [Peer]
@@ -151,7 +151,7 @@ start_menu(){
     clear
     echo "========================="
     echo " 介绍：适用于CentOS7"
-    echo " 作者：A"
+    echo " 作者：PODIPOD软库网"
     echo "========================="
     echo "1. 升级系统内核"
     echo "2. 安装wireguard"
@@ -195,6 +195,3 @@ start_menu(){
 }
 
 start_menu
-
-
-
