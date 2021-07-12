@@ -90,6 +90,7 @@ wireguard_install(){
     eth=$(ls /sys/class/net | grep e | head -1)
     chmod 777 -R /etc/wireguard
     systemctl start firewalld
+    systemctl enable firewalld
     firewall-cmd --zone=public --add-masquerade --permanent
     firewall-cmd --zone=internal --add-masquerade --permanent
     firewall-cmd --reload
