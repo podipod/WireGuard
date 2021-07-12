@@ -91,9 +91,6 @@ wireguard_install(){
     chmod 777 -R /etc/wireguard
     systemctl start firewalld
     systemctl enable firewalld
-    firewall-cmd --zone=public --add-masquerade --permanent
-    firewall-cmd --zone=internal --add-masquerade --permanent
-    firewall-cmd --reload
     echo 1 > /proc/sys/net/ipv4/ip_forward
     echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
