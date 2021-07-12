@@ -91,6 +91,9 @@ wireguard_install(){
     chmod 777 -R /etc/wireguard
     systemctl start firewalld
     systemctl enable firewalld
+    firewall-cmd --permanent --zone=public --add-masquerade
+    firewall-cmd --zone=public --add-port=$port/udp --permanent
+    firewall-cmd --reload
     echo 1 > /proc/sys/net/ipv4/ip_forward
     echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
@@ -102,8 +105,6 @@ Address = 10.10.12.1/24
 ListenPort = $port
 DNS = 8.8.8.8
 MTU = 1420
-PostUp = firewall-cmd --permanent --zone=public --add-masquerade
-PreDown = firewall-cmd --permanent --zone=public --add-port=$port/udp
 [Peer]
 PublicKey = $c2
 AllowedIPs = 10.10.12.2/32
