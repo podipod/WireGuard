@@ -199,6 +199,7 @@ start_menu(){
     echo "4. 卸载wireguard"
     echo "5. 显示客户端二维码"
     echo "6. 增加用户"
+    echo "7. 设置防火墙"
     echo "0. 退出脚本"
     echo
     read -p "请输入数字:" num
