@@ -34,7 +34,56 @@ update_kernel(){
         reboot
     fi
 }
-
+#防火墙设置
+set_firewall() {
+    _info "Setting firewall rules"
+    if _exists "firewall-cmd"; then
+        if firewall-cmd --state > /dev/null 2>&1; then
+            default_zone="$(firewall-cmd --get-default-zone)"
+            if [ "$(firewall-cmd --zone=${default_zone} --query-masquerade)" = "no" ]; then
+                _error_detect "firewall-cmd --permanent --zone=${default_zone} --add-masquerade"
+            fi
+            if ! firewall-cmd --list-ports | grep -qw "$port/udp"; then
+                _error_detect "firewall-cmd --permanent --zone=${default_zone} --add-port=$port/udp"
+            fi
+            _error_detect "firewall-cmd --reload"
+        else
+            _warn "Firewalld service unit is not running, please start it and manually set"
+            _warn "Maybe you need to run these commands like below:"
+            _warn "systemctl start firewalld"
+            _warn "firewall-cmd --permanent --zone=public --add-masquerade"
+            _warn "firewall-cmd --permanent --zone=public --add-port=$port/udp"
+            _warn "firewall-cmd --reload"
+        fi
+    else
+        if _exists "iptables"; then
+            iptables -A INPUT -p udp --dport $port -j ACCEPT
+            iptables -A FORWARD -i wg0 -j ACCEPT
+            iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+            iptables-save > /etc/iptables.rules
+            if [ -d "/etc/network/if-up.d" ]; then
+                cat > /etc/network/if-up.d/iptables <<EOF
+#!/bin/sh
+/sbin/iptables-restore < /etc/iptables.rules
+EOF
+                chmod +x /etc/network/if-up.d/iptables
+            fi
+        fi
+        if _exists "ip6tables"; then
+            ip6tables -A INPUT -p udp --dport $port -j ACCEPT
+            ip6tables -A FORWARD -i wg0 -j ACCEPT
+            ip6tables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+            ip6tables-save > /etc/ip6tables.rules
+            if [ -d "/etc/network/if-up.d" ]; then
+                cat > /etc/network/if-up.d/ip6tables <<EOF
+#!/bin/sh
+/sbin/ip6tables-restore < /etc/ip6tables.rules
+EOF
+                chmod +x /etc/network/if-up.d/ip6tables
+            fi
+        fi
+    fi
+}
 #生成随机端口
 rand(){
     min=$1
@@ -105,8 +154,6 @@ Address = 10.10.12.1/24
 ListenPort = $port
 DNS = 8.8.8.8
 MTU = 1420
-PostUp = firewall-cmd --zone=public --add-port $port/udp && firewall-cmd --zone=public --add-masquerade
-PostDown = firewall-cmd --zone=public --remove-port $port/udp && firewall-cmd --zone=public --remove-masquerade
 [Peer]
 PublicKey = $c2
 AllowedIPs = 10.10.12.2/32
