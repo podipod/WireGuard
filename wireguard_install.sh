@@ -56,6 +56,7 @@ set_firewall() {
              "firewall-cmd --permanent --zone=public --add-port=$port/udp"
             "firewall-cmd --reload"
         fi
+     fi
 }
 #生成随机端口
 rand(){
