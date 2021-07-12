@@ -62,7 +62,17 @@ _warn() {
     _yellow "$1"
     printf "\n"
 }
-
+_printargs() {
+    printf -- "%s" "[$(date)] "
+    printf -- "%s" "$1"
+    printf "\n"
+}
+_error() {
+    printf -- "%s" "[$(date)] "
+    _red "$1"
+    printf "\n"
+    exit 2
+}
 #防火墙设置
 set_firewall() {
     _info "Setting firewall rules"
