@@ -34,68 +34,30 @@ update_kernel(){
         reboot
     fi
 }
-_info() {
-    _printargs "$@"
-}
-_exists() {
-    local cmd="$1"
-    if eval type type > /dev/null 2>&1; then
-        eval type "$cmd" > /dev/null 2>&1
-    elif command > /dev/null 2>&1; then
-        command -v "$cmd" > /dev/null 2>&1
-    else
-        which "$cmd" > /dev/null 2>&1
-    fi
-    local rt=$?
-    return ${rt}
-}
-_error_detect() {
-    local cmd="$1"
-    _info "${cmd}"
-    eval ${cmd} 1> /dev/null
-    if [ $? -ne 0 ]; then
-        _error "Execution command (${cmd}) failed, please check it and try again."
-    fi
-}
-_warn() {
-    printf -- "%s" "[$(date)] "
-    _yellow "$1"
-    printf "\n"
-}
-_printargs() {
-    printf -- "%s" "[$(date)] "
-    printf -- "%s" "$1"
-    printf "\n"
-}
-_error() {
-    printf -- "%s" "[$(date)] "
-    _red "$1"
-    printf "\n"
-    exit 2
-}
+
 #防火墙设置
 set_firewall() {
-    _info "Setting firewall rules"
-    if _exists "firewall-cmd"; then
+     "Setting firewall rules"
+    if  "firewall-cmd"; then
         if firewall-cmd --state > /dev/null 2>&1; then
             default_zone="$(firewall-cmd --get-default-zone)"
             if [ "$(firewall-cmd --zone=${default_zone} --query-masquerade)" = "no" ]; then
-                _error_detect "firewall-cmd --permanent --zone=${default_zone} --add-masquerade"
+                 "firewall-cmd --permanent --zone=${default_zone} --add-masquerade"
             fi
             if ! firewall-cmd --list-ports | grep -qw "$port/udp"; then
-                _error_detect "firewall-cmd --permanent --zone=${default_zone} --add-port=$port/udp"
+                 "firewall-cmd --permanent --zone=${default_zone} --add-port=$port/udp"
             fi
-            _error_detect "firewall-cmd --reload"
+             "firewall-cmd --reload"
         else
-            _warn "Firewalld service unit is not running, please start it and manually set"
-            _warn "Maybe you need to run these commands like below:"
-            _warn "systemctl start firewalld"
-            _warn "firewall-cmd --permanent --zone=public --add-masquerade"
-            _warn "firewall-cmd --permanent --zone=public --add-port=$port/udp"
-            _warn "firewall-cmd --reload"
+            "Firewalld service unit is not running, please start it and manually set"
+            "Maybe you need to run these commands like below:"
+            "systemctl start firewalld"
+            "firewall-cmd --permanent --zone=public --add-masquerade"
+             "firewall-cmd --permanent --zone=public --add-port=$port/udp"
+            "firewall-cmd --reload"
         fi
     else
-        if _exists "iptables"; then
+        if  "iptables"; then
             iptables -A INPUT -p udp --dport $port -j ACCEPT
             iptables -A FORWARD -i wg0 -j ACCEPT
             iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
@@ -108,7 +70,7 @@ EOF
                 chmod +x /etc/network/if-up.d/iptables
             fi
         fi
-        if _exists "ip6tables"; then
+        if  "ip6tables"; then
             ip6tables -A INPUT -p udp --dport $port -j ACCEPT
             ip6tables -A FORWARD -i wg0 -j ACCEPT
             ip6tables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
