@@ -222,6 +222,9 @@ start_menu(){
     6)
     add_user
     ;;
+    7)
+    set_firewall
+    ;;
     0)
     exit 1
     ;;
