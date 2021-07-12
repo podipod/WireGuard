@@ -90,7 +90,7 @@ wireguard_install(){
     eth=$(ls /sys/class/net | grep e | head -1)
     chmod 777 -R /etc/wireguard
     systemctl start firewalld
-    firewall-cmd --add-interface=wg0-server --zone=internal --permanent
+    firewall-cmd --zone=public --add-masquerade --permanent
     firewall-cmd --zone=internal --add-masquerade --permanent
     firewall-cmd --reload
     echo 1 > /proc/sys/net/ipv4/ip_forward
