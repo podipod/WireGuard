@@ -34,6 +34,35 @@ update_kernel(){
         reboot
     fi
 }
+_info() {
+    _printargs "$@"
+}
+_exists() {
+    local cmd="$1"
+    if eval type type > /dev/null 2>&1; then
+        eval type "$cmd" > /dev/null 2>&1
+    elif command > /dev/null 2>&1; then
+        command -v "$cmd" > /dev/null 2>&1
+    else
+        which "$cmd" > /dev/null 2>&1
+    fi
+    local rt=$?
+    return ${rt}
+}
+_error_detect() {
+    local cmd="$1"
+    _info "${cmd}"
+    eval ${cmd} 1> /dev/null
+    if [ $? -ne 0 ]; then
+        _error "Execution command (${cmd}) failed, please check it and try again."
+    fi
+}
+_warn() {
+    printf -- "%s" "[$(date)] "
+    _yellow "$1"
+    printf "\n"
+}
+
 #防火墙设置
 set_firewall() {
     _info "Setting firewall rules"
