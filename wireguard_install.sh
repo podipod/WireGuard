@@ -89,19 +89,13 @@ wireguard_install(){
     port=$(rand 10000 60000)
     eth=$(ls /sys/class/net | grep e | head -1)
     chmod 777 -R /etc/wireguard
-    systemctl stop firewalld
-    systemctl disable firewalld
-    yum install -y iptables-services 
-    systemctl enable iptables 
-    systemctl start iptables 
-    iptables -P INPUT ACCEPT
-    iptables -P OUTPUT ACCEPT
-    iptables -P FORWARD ACCEPT
-    iptables -F
-    service iptables save
-    service iptables restart
+    systemctl start firewalld
+    firewall-cmd --add-interface=wg0-server --zone=internal --permanent
+    firewall-cmd --zone=internal --add-masquerade --permanent
+    firewall-cmd --reload
     echo 1 > /proc/sys/net/ipv4/ip_forward
     echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+    echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
     sysctl -p
 cat > /etc/wireguard/wg0.conf <<-EOF
 [Interface]
@@ -110,6 +104,8 @@ Address = 10.10.12.1/24
 ListenPort = $port
 DNS = 8.8.8.8
 MTU = 1420
+PostUp = firewall-cmd --zone=public --add-port $port/udp && firewall-cmd --zone=public --add-masquerade
+PostDown = firewall-cmd --zone=public --remove-port $port/udp && firewall-cmd --zone=public --remove-masquerade
 [Peer]
 PublicKey = $c2
 AllowedIPs = 10.10.12.2/32
