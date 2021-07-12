@@ -35,29 +35,6 @@ update_kernel(){
     fi
 }
 
-#防火墙设置
-set_firewall() {
-     "Setting firewall rules"
-    if  "firewall-cmd"; then
-        if firewall-cmd --state > /dev/null 2>&1; then
-            default_zone="$(firewall-cmd --get-default-zone)"
-            if [ "$(firewall-cmd --zone=${default_zone} --query-masquerade)" = "no" ]; then
-                 "firewall-cmd --permanent --zone=${default_zone} --add-masquerade"
-            fi
-            if ! firewall-cmd --list-ports | grep -qw "$port/udp"; then
-                 "firewall-cmd --permanent --zone=${default_zone} --add-port=$port/udp"
-            fi
-             "firewall-cmd --reload"
-        else
-            "Firewalld service unit is not running, please start it and manually set"
-            "Maybe you need to run these commands like below:"
-            "systemctl start firewalld"
-            "firewall-cmd --permanent --zone=public --add-masquerade"
-             "firewall-cmd --permanent --zone=public --add-port=$port/udp"
-            "firewall-cmd --reload"
-        fi
-     fi
-}
 #生成随机端口
 rand(){
     min=$1
@@ -128,6 +105,8 @@ Address = 10.10.12.1/24
 ListenPort = $port
 DNS = 8.8.8.8
 MTU = 1420
+PostUp = firewall-cmd --permanent --zone=public --add-masquerade
+PreDown = firewall-cmd --permanent --zone=public --add-port=$port/udp
 [Peer]
 PublicKey = $c2
 AllowedIPs = 10.10.12.2/32
@@ -173,7 +152,6 @@ start_menu(){
     echo "4. 卸载wireguard"
     echo "5. 显示客户端二维码"
     echo "6. 增加用户"
-    echo "7. 设置防火墙"
     echo "0. 退出脚本"
     echo
     read -p "请输入数字:" num
@@ -196,9 +174,6 @@ start_menu(){
     ;;
     6)
     add_user
-    ;;
-    7)
-    set_firewall
     ;;
     0)
     exit 1
